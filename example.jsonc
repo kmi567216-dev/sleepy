@@ -10,6 +10,8 @@ version now: 2
     "secret": "MySecret", // 密钥, 更新状态时使用
     "status": 0, // 目前的状态 (整数)
     "app_name": "系统桌面", //当前使用的软件名称
+    "pc_status": 0, // 电脑端状态 (整数, 对应 status_list 索引)
+    "pc_app_name": "系统桌面", // 电脑端当前使用的软件名称
     "status_list": [ // 状态列表, 索引从 0 开始, 对应上面的 status
         { // status: 0
             "id": 0, // 与索引相同，非必须，仅为方便查看 (建议加上)

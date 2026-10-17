@@ -2,6 +2,9 @@
 
 > What are you doing?
 
+> **macOS 部署（前台应用检测 / launchd / Cloudflare Tunnel）见 [README-MAC.md](./README-MAC.md)**
+
+
 一个查看个人在线状态，以及视奸他在用什么软件的 Flask 网站，让他人能知道你不在而不是故意吊他/她
 仅仅是在仓库中加入了App_name字段,手机客户端使用请搭配Macrodroid，来实现切换应用上报信息/同步睡眠信息
 Macrodroid配置文件请下载仓库中的"前台应用状态.macro"

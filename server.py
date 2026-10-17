@@ -51,6 +51,7 @@ def index():
             'desc': '未知的标识符，可能是配置问题。',
             'color': 'error'
         }
+        pc_stat = dict(stat)
     return render_template(
         'index.html',
         user=ot['user'],
@@ -59,9 +60,9 @@ def index():
         status_name=stat['name'],
         status_desc=stat['desc'],
         pc_status_name=pc_stat['name'],
-        pc_status_desc=pc_stat['pc_desc'],
+        pc_status_desc=pc_stat['desc'],
         status_color=stat['color'],
-        pc_status_color=pc_stat['pc_color'],
+        pc_status_color=pc_stat['color'],
         more_text=ot['more_text']
     )
 
@@ -123,8 +124,9 @@ def set_normal():
     if pc_app_name == "" or pc_app_name == "None":
         pc_app_name = None
     secret = escape(request.args.get("secret"))
-    u.info(f'status: {status}, name: {app_name}, secret: "{secret}", pc_status: {pc_status}, pc_name: {pc_app_name}')
-    print(f'status: {status}, name: {app_name}, secret: "{secret}", pc_status: {pc_status}, pc_name: {pc_app_name}')
+    secret_masked = f'{str(secret)[:2]}***' if secret else ''
+    u.info(f'status: {status}, name: {app_name}, secret: "{secret_masked}", pc_status: {pc_status}, pc_name: {pc_app_name}')
+    print(f'status: {status}, name: {app_name}, secret: "{secret_masked}", pc_status: {pc_status}, pc_name: {pc_app_name}')
     secret_real = d.dget('secret')
     if secret == secret_real:
         if status is not None:
