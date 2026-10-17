@@ -19,13 +19,13 @@
 
         <a>{{ user }}'s Status:<br><a id="status" style="font-size: 1.2em;">{{ status_name }}</a></a>
         <br>
-        <a id="additional-info" style="font-size: 1em;">{{ status_desc }}</a>
+        <a id="status_desc" style="font-size: 1em;">{{ status_desc }}</a>
         <br>
         <br>
         <a>{{ user }}'s PC_Status:<br>
         <a id="pc_status" style="font-size: 1.2em;">{{ pc_status_name }}</a>
         <br>
-        <a id="additional-info" style="font-size: 1em;">{{ pc_status_desc }}</a>
+        <a id="pc_status_desc" style="font-size: 1em;">{{ pc_status_desc }}</a>
 
         <div style="height: 10px;"></div>
         {{ more_text | safe }}
@@ -45,9 +45,43 @@
     <!-- <script src="assets/query.js"></script> -->
     <script>
         const statusElement = document.getElementById('status');
+        const statusDescElement = document.getElementById('status_desc');
+        const pcStatusElement = document.getElementById('pc_status');
+        const pcStatusDescElement = document.getElementById('pc_status_desc');
+
         statusElement.classList.add('{{ status_color }}');
-        const pc_statusElement = document.getElementById('pc_status');
-        pc_statusElement.classList.add('{{ pc_status_color }}');
+        pcStatusElement.classList.add('{{ pc_status_color }}');
+
+        function setText(el, text) {
+            if (el && typeof text === 'string' && text.length) el.textContent = text;
+        }
+        function setColor(el, color) {
+            if (!el || !color) return;
+            el.className = color;
+        }
+
+        async function refreshStatus() {
+            try {
+                const resp = await fetch('/query?_=' + Date.now(), {cache: 'no-store'});
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!data.success) return;
+                if (data.info) {
+                    setText(statusElement, data.info.name);
+                    setText(statusDescElement, data.info.desc);
+                    setColor(statusElement, data.info.color);
+                }
+                if (data.pc_info) {
+                    setText(pcStatusElement, data.pc_info.name);
+                    setText(pcStatusDescElement, data.pc_info.desc);
+                    setColor(pcStatusElement, data.pc_info.color);
+                }
+            } catch (e) {
+                /* 网络抖动时保留旧值，下一轮再试 */
+            }
+        }
+
+        setInterval(refreshStatus, 3000);
     </script>
 </body>
 

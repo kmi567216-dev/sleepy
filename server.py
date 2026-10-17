@@ -82,21 +82,37 @@ def style_css():
 def query():
     d.load()
     showip(request, '/query')
-    st = d.data['status']
-    # stlst = d.data['status_list']
+    st = d.data.get('status', 0)
     try:
-        stinfo = d.data['status_list'][st]
-        if(st == 0):
-            stinfo['name'] = d.data['app_name']
-    except:
+        stinfo = d.data['status_list'][st].copy()
+        if st == 0:
+            stinfo['name'] = d.data.get('app_name', stinfo.get('name'))
+    except Exception:
         stinfo = {
             'status': st,
-            'name': '未知'
+            'name': '未知',
+            'desc': '',
+            'color': ''
+        }
+    # 电脑端状态
+    pc_st = d.data.get('pc_status', 0)
+    try:
+        pc_info = d.data['status_list'][pc_st].copy()
+        if pc_st == 0:
+            pc_info['name'] = d.data.get('pc_app_name', pc_info.get('name'))
+    except Exception:
+        pc_info = {
+            'status': pc_st,
+            'name': '未知',
+            'desc': '',
+            'color': ''
         }
     ret = {
         'success': True,
         'status': st,
-        'info': stinfo
+        'info': stinfo,
+        'pc_status': pc_st,
+        'pc_info': pc_info
     }
     return u.format_dict(ret)
 
