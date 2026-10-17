@@ -31,6 +31,48 @@ def showip(req, msg):
         ip2 = None
         u.infon(f'- Request: {ip1} : {msg}')
 
+DEFAULT_SLACK_APPS = [
+    'bilibili', '哔哩哔哩', 'youtube', '抖音', 'tiktok', '微博', '小红书', '知乎',
+    'netflix', '爱奇艺', '腾讯视频', '优酷', 'steam', 'epic games', 'minecraft',
+    '网易云音乐', 'spotify', 'qq音乐', '游戏'
+]
+DEFAULT_WORK_APPS = [
+    'xcode', 'visual studio code', 'code', '终端', 'terminal', 'iterm2',
+    'intellij idea', 'pycharm', 'webstorm', 'goland', 'sublime text', 'nova',
+    'pages', 'numbers', 'keynote', 'microsoft word', 'word', 'microsoft excel',
+    'excel', 'microsoft powerpoint', 'powerpoint', '飞书', '钉钉', 'slack',
+    'notion', 'obsidian', 'figma', 'sketch', 'docker', 'postman'
+]
+
+
+def _match_app(app, names):
+    app_l = app.lower()
+    return any(app_l == str(n).lower() for n in names)
+
+
+def pc_display():
+    """根据 pc_status / pc_app_name 计算电脑端展示信息。"""
+    app = (d.data.get('pc_app_name') or '').strip()
+    pc_st = d.data.get('pc_status', 0)
+    try:
+        stlist = d.data['status_list']
+    except Exception:
+        stlist = []
+    if pc_st != 0:
+        try:
+            info = stlist[pc_st].copy()
+        except Exception:
+            info = {'name': '未知', 'desc': '未知的标识符，可能是配置问题。', 'color': 'error'}
+        return info
+    if not app:
+        return {'name': '系统桌面', 'desc': '目前 Mac 上暂无前台应用。', 'color': 'awake'}
+    if _match_app(app, d.data.get('pc_slack_apps', DEFAULT_SLACK_APPS)):
+        return {'name': app, 'desc': f'目前 Mac 上正在使用 {app}，大概率在摸鱼。', 'color': 'slacking'}
+    if _match_app(app, d.data.get('pc_work_apps', DEFAULT_WORK_APPS)):
+        return {'name': app, 'desc': f'目前 Mac 上正在使用 {app}，在认真工作。', 'color': 'working'}
+    return {'name': app, 'desc': f'目前 Mac 上正在使用 {app}。', 'color': 'awake'}
+
+
 @app.route('/')
 def index():
     d.load()
@@ -38,20 +80,15 @@ def index():
     ot = d.data['other']
     try:
         stat = d.data['status_list'][d.data['status']].copy()
-        pc_stat = d.data['status_list'][d.data['pc_status']].copy()
-        if(d.data['pc_status'] == 0):
-            pc_app_name = d.data['pc_app_name']
-            pc_stat['name'] = pc_app_name
-        if(d.data['status'] == 0):
-            app_name = d.data['app_name']
-            stat['name'] = app_name
+        if d.data['status'] == 0:
+            stat['name'] = d.data.get('app_name', stat.get('name'))
     except:
         stat = {
             'name': '未知',
             'desc': '未知的标识符，可能是配置问题。',
             'color': 'error'
         }
-        pc_stat = dict(stat)
+    pc_stat = pc_display()
     return render_template(
         'index.html',
         user=ot['user'],
@@ -94,24 +131,13 @@ def query():
             'desc': '',
             'color': ''
         }
-    # 电脑端状态
-    pc_st = d.data.get('pc_status', 0)
-    try:
-        pc_info = d.data['status_list'][pc_st].copy()
-        if pc_st == 0:
-            pc_info['name'] = d.data.get('pc_app_name', pc_info.get('name'))
-    except Exception:
-        pc_info = {
-            'status': pc_st,
-            'name': '未知',
-            'desc': '',
-            'color': ''
-        }
+    # 电脑端状态（含摸鱼判断）
+    pc_info = pc_display()
     ret = {
         'success': True,
         'status': st,
         'info': stinfo,
-        'pc_status': pc_st,
+        'pc_status': d.data.get('pc_status', 0),
         'pc_info': pc_info
     }
     return u.format_dict(ret)

@@ -12,6 +12,8 @@ version now: 2
     "app_name": "系统桌面", //当前使用的软件名称
     "pc_status": 0, // 电脑端状态 (整数, 对应 status_list 索引)
     "pc_app_name": "系统桌面", // 电脑端当前使用的软件名称
+    "pc_slack_apps": ["Bilibili", "哔哩哔哩", "YouTube", "抖音", "TikTok", "微博", "小红书", "知乎", "Netflix", "爱奇艺", "腾讯视频", "优酷", "Steam", "Epic Games", "Minecraft", "网易云音乐", "Spotify", "QQ音乐", "游戏"], // 判定为“摸鱼”的前台应用（精确匹配，不区分大小写）
+    "pc_work_apps": ["Xcode", "Visual Studio Code", "Code", "终端", "Terminal", "iTerm2", "IntelliJ IDEA", "PyCharm", "WebStorm", "GoLand", "Sublime Text", "Nova", "Pages", "Numbers", "Keynote", "Microsoft Word", "Word", "Microsoft Excel", "Excel", "Microsoft PowerPoint", "PowerPoint", "飞书", "钉钉", "Slack", "Notion", "Obsidian", "Figma", "Sketch", "Docker", "Postman"], // 判定为“认真工作”的前台应用
     "status_list": [ // 状态列表, 索引从 0 开始, 对应上面的 status
         { // status: 0
             "id": 0, // 与索引相同，非必须，仅为方便查看 (建议加上)
@@ -28,7 +30,7 @@ version now: 2
         // 还可添加更多，以此类推
     ],
     "other": { // 其他配置 (网页上的信息)
-        "user": "玄", // 你的名字
+        "user": "miku", // 你的名字
         "background": "https://s.040905.xyz/d/v/1686810550994.jpg?sign=vxvbNJbxPZ-thzF6Pf7QKy4jp0p9lKb3YVGGlLRhQms=:0", // 背景图片 url, 可用网络上的图片 api; 推荐 repo: wyf01239/imgapi (网络 api 集合)
         "alpha": 0.85, // 卡片不透明度设置 (0 ~ 1), 0 为完全透明, 1 为完全不透明
         "learn_more": "GitHub Repo", // 更多信息链接的提示, 默认为 github repo

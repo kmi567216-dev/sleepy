@@ -113,6 +113,20 @@ ioreg -n Root -d1 -a | grep -q "CGSSessionScreenIsLocked" && ...
 
 或者用 `CGSessionCopyCurrentDictionary()` 判断锁屏，锁屏时发 `pc_status=1`，解锁后恢复。
 
+### 摸鱼判断
+
+`data.json` 里的 `pc_slack_apps` / `pc_work_apps` 是**精确匹配**（不区分大小写），`server.py` 的 `pc_display()` 会据此决定 PC 状态的颜色和描述：
+
+| 命中 | 描述 | 颜色 |
+| --- | --- | --- |
+| `pc_slack_apps` | 目前 Mac 上正在使用 X，大概率在摸鱼。 | `slacking`（橙） |
+| `pc_work_apps` | 目前 Mac 上正在使用 X，在认真工作。 | `working`（蓝） |
+| 都不命中 | 目前 Mac 上正在使用 X。 | `awake`（绿） |
+
+想加应用直接往数组里加名字即可（用 `frontapp` 输出的名字，例如 `终端`、`哔哩哔哩`）。注意这里只能识别**应用**，浏览器里的具体网页（比如 YouTube 标签页）识别不到，会按 Chrome / Safari 本身算中性。
+
+页面上的名字由 `data.json` 的 `other.user` 控制（例如 `miku`）。
+
 ## 5. Cloudflare Tunnel（可选，公网访问）
 
 ```bash

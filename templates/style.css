@@ -43,3 +43,11 @@ body {
 .error {
     color: red;
 }
+
+.working {
+    color: rgb(0, 102, 204);
+}
+
+.slacking {
+    color: rgb(230, 126, 34);
+}
