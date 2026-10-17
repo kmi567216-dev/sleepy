@@ -4,6 +4,6 @@ data.*.json
 o.txt
 venv/
 .DS_Store
-mac/frontapp
+mac/frontmost/frontapp
 前台应用状态-本机.macro
 *.log

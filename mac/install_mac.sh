@@ -19,7 +19,7 @@ fi
 "$BASE/venv/bin/pip" install -q -r "$BASE/requirements.txt" waitress
 
 echo "==> 编译前台应用检测器"
-xcrun swiftc -O "$BASE/mac/frontapp.swift" -o "$BASE/mac/frontapp"
+xcrun swiftc -O "$BASE/mac/frontmost/frontapp.swift" -o "$BASE/mac/frontmost/frontapp"
 
 echo "==> 写入 LaunchAgents"
 cat > "$AGENTS/com.sleepy.server.plist" <<PLIST
@@ -56,7 +56,7 @@ cat > "$AGENTS/com.sleepy.pcstatus.plist" <<PLIST
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>$BASE/mac/pc_status_mac.sh</string>
+        <string>$BASE/mac/frontmost/pc_status_mac.sh</string>
     </array>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>

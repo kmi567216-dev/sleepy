@@ -1,12 +1,12 @@
 #!/bin/bash
 # 轮询 macOS 前台应用并上报到 sleepy（pc_status / pc_app_name）。
-# 用法: bash mac/pc_status_mac.sh
+# 用法: bash mac/frontmost/pc_status_mac.sh
 # 依赖: swiftc（Xcode Command Line Tools）、curl、plutil
 set -u
 
-BASE="$(cd "$(dirname "$0")/.." && pwd)"
+BASE="$(cd "$(dirname "$0")/../.." && pwd)"
 DATA="$BASE/data.json"
-FRONTAPP="$BASE/mac/frontapp"
+FRONTAPP="$BASE/mac/frontmost/frontapp"
 SERVER="${SLEEPY_SERVER:-http://127.0.0.1:9010}"
 
 if [ ! -f "$DATA" ]; then
@@ -15,8 +15,8 @@ if [ ! -f "$DATA" ]; then
 fi
 
 if [ ! -x "$FRONTAPP" ]; then
-    echo "building mac/frontapp ..." >&2
-    xcrun swiftc -O "$BASE/mac/frontapp.swift" -o "$FRONTAPP" || exit 1
+    echo "building mac/frontmost/frontapp ..." >&2
+    xcrun swiftc -O "$BASE/mac/frontmost/frontapp.swift" -o "$FRONTAPP" || exit 1
 fi
 
 SECRET=$(/usr/bin/plutil -extract secret raw -o - "$DATA" 2>/dev/null)

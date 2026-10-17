@@ -9,9 +9,9 @@
 | 常驻 | launchd (`~/Library/LaunchAgents`) | systemd (`/etc/systemd/system`) |
 | WSGI | waitress | waitress（或 gunicorn） |
 | 公网 | cloudflared LaunchAgent | cloudflared systemd service |
-| 前台应用检测 | `mac/frontapp` + launchd | 服务器无桌面时**不装**；Mac 继续上报，或 Linux 桌面用 xdotool |
+| 前台应用检测 | `mac/frontmost/frontapp` + launchd | 服务器无桌面时**不装**；Mac 继续上报，或 Linux 桌面用 xdotool |
 
-> 关键点：**Linux VPS 上没有“前台应用”这个概念**。如果你的 Mac 还是主力机，就让 Mac 继续跑 `mac/pc_status_mac.sh`，把上报地址指向 Linux 服务器；Linux 只负责跑 Flask + 隧道。
+> 关键点：**Linux VPS 上没有“前台应用”这个概念**。如果你的 Mac 还是主力机，就让 Mac 继续跑 `mac/frontmost/pc_status_mac.sh`，把上报地址指向 Linux 服务器；Linux 只负责跑 Flask + 隧道。
 
 ## 1. 准备
 
@@ -165,7 +165,7 @@ launchctl bootout gui/$(id -u)/com.sleepy.server
 launchctl bootout gui/$(id -u)/com.cloudflare.sleepy-tunnel
 ```
 
-注意 `mac/pc_status_mac.sh` 是从本地 `data.json` 读 secret 的，两边 secret 必须一致。
+注意 `mac/frontmost/pc_status_mac.sh` 是从本地 `data.json` 读 secret 的，两边 secret 必须一致。
 
 ## 7. 如果 Linux 本身是桌面
 
@@ -176,7 +176,7 @@ sudo apt install -y xdotool
 xdotool getactivewindow getwindowclassname   # 或 getwindowname
 ```
 
-把 `mac/pc_status_mac.sh` 里的 `frontapp` 换成这个命令，轮询后同样 `curl /set` 即可。Wayland 没有通用方案（GNOME 的 `Eval` 在新版本已禁用），不建议在 Wayland 桌面上折腾。
+把 `mac/frontmost/pc_status_mac.sh` 里的 `frontapp` 换成这个命令，轮询后同样 `curl /set` 即可。Wayland 没有通用方案（GNOME 的 `Eval` 在新版本已禁用），不建议在 Wayland 桌面上折腾。
 
 ## 8. 安全
 

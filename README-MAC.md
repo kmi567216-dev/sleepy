@@ -13,7 +13,7 @@
 ## 原理
 
 ```
-Mac: mac/pc_status_mac.sh ──每2秒──> frontapp ──> /set?pc_status=0&pc_app_name=<App>
+Mac: mac/frontmost/pc_status_mac.sh ──每2秒──> frontapp ──> /set?pc_status=0&pc_app_name=<App>
 手机: MacroDroid ───────────────────────────────> /set?status=N&app_name=<App>
                                                       │
                                              Flask 写入 data.json
@@ -74,7 +74,7 @@ bash mac/install_mac.sh
 会做四件事：
 
 1. 创建/复用 `venv` 并安装 Flask + waitress；
-2. 用 `swiftc` 编译 `mac/frontapp`；
+2. 用 `swiftc` 编译 `mac/frontmost/frontapp`；
 3. 写入并加载两个 LaunchAgent：
    - `com.sleepy.server`：waitress 监听 `127.0.0.1:9010`
    - `com.sleepy.pcstatus`：每 2 秒上报前台应用
@@ -92,8 +92,8 @@ launchctl print gui/$(id -u)/com.sleepy.pcstatus | grep -E "state|pid"
 
 ## 4. Mac 前台检测是怎么做的
 
-- `mac/frontapp.swift`：启动一次，读取 `NSWorkspace.shared.frontmostApplication` 并打印应用名后退出。
-- `mac/pc_status_mac.sh`：每 2 秒运行一次 `frontapp`；应用名变化时调用：
+- `mac/frontmost/frontapp.swift`：启动一次，读取 `NSWorkspace.shared.frontmostApplication` 并打印应用名后退出。
+- `mac/frontmost/pc_status_mac.sh`：每 2 秒运行一次 `frontapp`；应用名变化时调用：
 
 ```bash
 curl -sG http://127.0.0.1:9010/set \
@@ -199,7 +199,7 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 ## 8. 常见问题
 
 **页面一直显示“系统桌面”**
-：Mac 上报进程没跑起来，或者用了会缓存的长驻 `NSWorkspace` 循环。检查 `launchctl print gui/$(id -u)/com.sleepy.pcstatus`，并确认 `mac/frontapp` 输出的确实是当前 App。
+：Mac 上报进程没跑起来，或者用了会缓存的长驻 `NSWorkspace` 循环。检查 `launchctl print gui/$(id -u)/com.sleepy.pcstatus`，并确认 `mac/frontmost/frontapp` 输出的确实是当前 App。
 
 **域名解析不了 / 只有部分设备能打开**
 ：先 `dig +short sleep.example.com`，再换 `dig @1.1.1.1` 对比。路由器或代理软件的 DNS（fake-ip、自定义重写、AdGuard 过滤）可能对整域返回空记录；可临时把设备 DNS 改成 `1.1.1.1` 验证。
@@ -214,8 +214,9 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 
 | 路径 | 说明 |
 | --- | --- |
-| `mac/frontapp.swift` | 单次查询前台应用并打印 |
-| `mac/pc_status_mac.sh` | 轮询并上报 `pc_status` / `pc_app_name` |
+| `mac/frontmost/frontapp.swift` | 单次查询前台应用并打印 |
+| `mac/frontmost/pc_status_mac.sh` | 轮询并上报 `pc_status` / `pc_app_name` |
 | `mac/install_mac.sh` | 安装服务端 + 上报器的 launchd 服务 |
+| `mac/frontmost/README.md` | 前台检测子目录说明 |
 | `server.py` | Flask 路由；已修复 `pc_desc` / `pc_color` |
 | `example.jsonc` | 配置模板（含 `pc_status` / `pc_app_name`） |
