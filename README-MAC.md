@@ -23,6 +23,8 @@ Mac: mac/pc_status_mac.sh ──每2秒──> frontapp ──> /set?pc_status=0
 
 服务端本身不做任何“检测”，只负责接收上报和展示。
 
+首页每 3 秒轮询一次 `/query`（响应里同时包含 `info` 和 `pc_info`），状态和前台应用会自动更新，不需要手动刷新；请求失败时保留旧值，下一轮再试。
+
 ## 1. 准备环境
 
 要求：macOS、Python ≥ 3.9、Xcode Command Line Tools（`swiftc` 用于编译前台检测器）。
