@@ -125,10 +125,10 @@
                 <td class="mono">{{ r.visitor }}</td>
                 <td><span class="screen-cell">{{ screen_icon(r.thumb) }}<span class="screen-name">{{ r.screen }}</span></span></td>
                 <td>{{ r.platform }}</td>
-                <td>{{ r.model }}</td>
+                <td>{{ r.model }}{% if r.build %}<div class="muted" style="font-size:10px">{{ r.build }}</div>{% endif %}</td>
                 <td>{{ r.country }}</td>
                 <td>{{ r.timezone }}</td>
-                <td class="ua">{{ r.ua }}</td>
+                <td class="ua" title="{{ r.ua_full }}">{{ r.ua }}{% if r.ua_full|length > 110 %}…{% endif %}</td>
             </tr>
             {% else %}
             <tr><td colspan="8" class="muted">还没有访客记录</td></tr>

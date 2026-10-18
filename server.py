@@ -215,6 +215,7 @@ def visit():
         'window': text('window', 32),
         'platform': text('platform', 64),
         'model': _device_model({'model': text('model', 64), 'ua': ua}),
+        'build': _device_build({'build': text('build', 64), 'ua': ua}),
         'languages': text('languages', 128),
         'timezone': text('timezone', 64),
         'ua': ua,
@@ -240,6 +241,7 @@ def visit():
 
 
 _UA_MODEL_RE = re.compile(r'Android[^;]*;\s*([^;()]+?)\s+Build/', re.I)
+_UA_BUILD_RE = re.compile(r'Build/([^;)]+)', re.I)
 
 
 def _device_model(record):
@@ -284,6 +286,16 @@ def _screen_thumb(name):
         'dw': max(14, int(round(w * scale))),
         'dh': max(14, int(round(h * scale))),
     }
+
+
+def _device_build(record):
+    """Build/ 后面的构建号（华为常见 HUAWEI+型号，如 HUAWEITAS-AL00）。"""
+    build = (record.get('build') or '').strip()
+    if build:
+        return build
+    ua = record.get('ua') or ''
+    match = _UA_BUILD_RE.search(ua)
+    return match.group(1).strip() if match else ''
 
 
 def _load_visits():
@@ -342,7 +354,9 @@ def visits_page():
             'model': _device_model(r) or '-',
             'country': r.get('country') or '-',
             'timezone': r.get('timezone') or '-',
-            'ua': (r.get('ua') or '')[:60],
+            'ua': (r.get('ua') or '')[:110],
+            'ua_full': r.get('ua') or '',
+            'build': _device_build(r),
             'thumb': _screen_thumb(r.get('screen') or ''),
         })
 
