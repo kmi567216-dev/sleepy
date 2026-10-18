@@ -260,34 +260,6 @@ def _device_model(record):
     return ''
 
 
-_SCREEN_RE = re.compile(r'^\s*(\d{2,5})\s*x\s*(\d{2,5})\s*(?:@\s*[\d.]+)?\s*$')
-SCREEN_ICON_SCALE = 0.1  # 1 个 CSS 像素画成 0.1px；改成 1.0 就是严格 1:1
-
-
-def _screen_thumb(name, scale=SCREEN_ICON_SCALE):
-    """把 "1440x900@2" 解析成示意图所需的尺寸/类型，解析失败返回 None。"""
-    match = _SCREEN_RE.match(name or '')
-    if not match:
-        return None
-    w, h = int(match.group(1)), int(match.group(2))
-    if w <= 0 or h <= 0:
-        return None
-    ratio = w / h
-    if ratio < 0.78:
-        kind = 'phone'
-    elif ratio < 1.15:
-        kind = 'tablet'
-    elif min(w, h) <= 500 and ratio >= 1.5:
-        kind = 'phone'
-    else:
-        kind = 'desktop'
-    return {
-        'w': w, 'h': h, 'kind': kind,
-        'dw': max(8, int(round(w * scale))),
-        'dh': max(8, int(round(h * scale))),
-    }
-
-
 def _device_build(record):
     """Build/ 后面的构建号（华为常见 HUAWEI+型号，如 HUAWEITAS-AL00）。"""
     build = (record.get('build') or '').strip()
@@ -296,6 +268,25 @@ def _device_build(record):
     ua = record.get('ua') or ''
     match = _UA_BUILD_RE.search(ua)
     return match.group(1).strip() if match else ''
+
+
+_SCREEN_RE = re.compile(r'^\s*(\d{2,5})\s*x\s*(\d{2,5})\s*(?:@\s*[\d.]+)?\s*$')
+
+
+def _screen_thumb(name, max_w=64, max_h=44):
+    """把 "1440x900@2" 解析成长方形示意图的宽高，保持真实比例，解析失败返回 None。"""
+    match = _SCREEN_RE.match(name or '')
+    if not match:
+        return None
+    w, h = int(match.group(1)), int(match.group(2))
+    if w <= 0 or h <= 0:
+        return None
+    scale = min(float(max_w) / w, float(max_h) / h)
+    return {
+        'w': w, 'h': h,
+        'dw': max(6, int(round(w * scale))),
+        'dh': max(6, int(round(h * scale))),
+    }
 
 
 def _load_visits():
@@ -357,7 +348,7 @@ def visits_page():
             'ua': (r.get('ua') or '')[:110],
             'ua_full': r.get('ua') or '',
             'build': _device_build(r),
-            'thumb': _screen_thumb(r.get('screen') or '', scale=0.04),
+            'thumb': _screen_thumb(r.get('screen') or '', max_w=26, max_h=20),
         })
 
     screens = []

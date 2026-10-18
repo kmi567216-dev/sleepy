@@ -34,14 +34,7 @@
         .muted { color: #6f7a88; }
         .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
         .ua { color: #7d8794; }
-        .dev { display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-end; vertical-align: middle; }
-        .dev .scr { width: var(--w); height: var(--h); border: 1.5px solid #8a95a3; border-radius: 4px; background: linear-gradient(145deg, #2b3846, #41546b); position: relative; box-shadow: 0 0 0 1px #0b0e12 inset; }
-        .dev.phone .scr { border-width: 2px; border-radius: 6px; }
-        .dev.phone .scr::before { content: ""; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 30%; height: 2px; background: #8a95a3; border-radius: 2px; }
-        .dev.tablet .scr { border-width: 2px; border-radius: 5px; }
-        .dev.desktop .scr { border-radius: 2px; }
-        .dev.desktop .stand { width: 2px; height: 4px; background: #8a95a3; }
-        .dev.desktop .base { width: 60%; height: 2px; background: #8a95a3; border-radius: 2px; margin-top: 1px; }
+        .rect { display: inline-block; border: 1px solid #8a95a3; border-radius: 2px; background: linear-gradient(145deg, #2b3846, #41546b); box-shadow: 0 0 0 1px #0b0e12 inset; vertical-align: middle; }
         .screen-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
         .screen-cell { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -86,10 +79,7 @@
 
     {% macro screen_icon(s) %}
     {% if s %}
-    <span class="dev {{ s.kind }}" style="--w: {{ s.dw }}px; --h: {{ s.dh }}px" title="{{ s.w }}×{{ s.h }}">
-        <span class="scr"></span>
-        {% if s.kind == 'desktop' %}<span class="stand"></span><span class="base"></span>{% endif %}
-    </span>
+    <span class="rect" style="width: {{ s.dw }}px; height: {{ s.dh }}px" title="{{ s.w }}×{{ s.h }}"></span>
     {% endif %}
     {% endmacro %}
 
@@ -98,7 +88,7 @@
         <table>
             {% for s in screens %}
             <tr>
-                <td style="width: 64px">{{ screen_icon(s) }}</td>
+                <td style="width: 72px; text-align: center">{{ screen_icon(s) }}</td>
                 <td class="screen-name">{{ s.name }}</td>
                 <td class="muted" style="text-align:right">{{ s.count }}</td>
             </tr>
