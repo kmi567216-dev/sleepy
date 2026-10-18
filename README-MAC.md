@@ -201,9 +201,11 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 
 查看：
 
-```bash
-tail -f ~/sleepy/visits.jsonl
-```
+- 原始记录：`tail -f ~/sleepy/visits.jsonl`
+- 统计页：`https://sleep.example.com/visits?secret=<你的secret>`，也可以加 `&format=json` 直接拿 JSON
+- 统计页包含：总访问、独立访客、最近 14 天、屏幕/平台/国家/型号/时区分布、最近 50 条记录
+
+`/visits` 没有公开入口，靠 `data.json` 的 `secret` 保护；secret 放在 URL 里，Cloudflare 边缘会看到，介意的话可以改成 POST 或请求头。
 
 关闭：删掉 `templates/index.html` 底部的 `<script src="/static/fp.min.js"></script>` 和紧随其后的指纹上报脚本（以及 `privacy_note`），然后删除 `visits.jsonl`。
 
@@ -243,4 +245,5 @@ tail -f ~/sleepy/visits.jsonl
 | `server.py` | Flask 路由；已修复 `pc_desc` / `pc_color` |
 | `example.jsonc` | 配置模板（含 `pc_status` / `pc_app_name`） |
 | `static/fp.min.js` | FingerprintJS v5（MIT），访客指纹 |
+| `templates/visits.html` | `/visits` 统计页模板 |
 | `visits.jsonl` | 运行时生成的访客记录，已在 `.gitignore` |

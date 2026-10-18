@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>sleepy · 访客统计</title>
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 32px 20px 60px;
+            background: #0f1216; color: #e6e9ef;
+            font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        .wrap { max-width: 1100px; margin: 0 auto; }
+        h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
+        .sub { color: #8892a0; font-size: 12px; margin-bottom: 24px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .card { background: #171c22; border: 1px solid #232a33; border-radius: 12px; padding: 16px; }
+        .num { font-size: 28px; font-weight: 600; letter-spacing: .5px; }
+        .label { color: #8892a0; font-size: 12px; margin-top: 2px; }
+        h2 { font-size: 14px; color: #aab4c0; margin: 26px 0 10px; font-weight: 600; }
+        .bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding: 8px 4px 0; }
+        .barwrap { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; height: 100%; }
+        .bar { width: 100%; max-width: 42px; background: linear-gradient(180deg, #4f8cff, #2c5fd1); border-radius: 4px 4px 2px 2px; min-height: 2px; }
+        .bar-day { color: #6f7a88; font-size: 10px; white-space: nowrap; }
+        .bar-count { color: #9aa6b4; font-size: 10px; }
+        .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #222932; font-size: 12.5px; vertical-align: top; }
+        th { color: #8892a0; font-weight: 500; }
+        tr:last-child td { border-bottom: none; }
+        .muted { color: #6f7a88; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+        .ua { color: #7d8794; }
+        footer { margin-top: 34px; color: #5f6a78; font-size: 11.5px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>sleepy · 访客统计</h1>
+    <div class="sub">数据来源 visits.jsonl（不含 IP，仅按 session 记录指纹摘要）</div>
+
+    <div class="grid">
+        <div class="card"><div class="num">{{ total }}</div><div class="label">总访问（页面加载）</div></div>
+        <div class="card"><div class="num">{{ unique }}</div><div class="label">独立访客（visitorId）</div></div>
+    </div>
+
+    <h2>最近 14 天</h2>
+    <div class="card">
+        <div class="bars">
+            {% for d in daily %}
+            <div class="barwrap" title="{{ d.day }}: {{ d.count }}">
+                <div class="bar-count">{{ d.count if d.count else '' }}</div>
+                <div class="bar" style="height: {{ (d.count / max_daily * 92) | round(1) }}px"></div>
+                <div class="bar-day">{{ d.day[5:] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% macro top_table(title, rows) %}
+    <div class="card">
+        <h2 style="margin-top:0">{{ title }}</h2>
+        <table>
+            {% for name, count in rows %}
+            <tr><td>{{ name }}</td><td class="muted" style="text-align:right">{{ count }}</td></tr>
+            {% else %}
+            <tr><td class="muted">暂无数据</td><td></td></tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endmacro %}
+
+    <div class="cols">
+        {{ top_table('屏幕分辨率', screens) }}
+        {{ top_table('平台 / 系统', platforms) }}
+        {{ top_table('国家 / 地区', countries) }}
+        {{ top_table('设备型号', models) }}
+        {{ top_table('时区', timezones) }}
+    </div>
+
+    <h2>最近访问（最多 50 条）</h2>
+    <div class="card" style="overflow-x:auto">
+        <table>
+            <tr><th>时间</th><th>访客</th><th>屏幕</th><th>平台</th><th>型号</th><th>国家</th><th>时区</th><th>UA</th></tr>
+            {% for r in recent %}
+            <tr>
+                <td class="mono">{{ r.ts }}</td>
+                <td class="mono">{{ r.visitor }}</td>
+                <td>{{ r.screen }}</td>
+                <td>{{ r.platform }}</td>
+                <td>{{ r.model }}</td>
+                <td>{{ r.country }}</td>
+                <td>{{ r.timezone }}</td>
+                <td class="ua">{{ r.ua }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="muted">还没有访客记录</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <footer>仅本地展示；访问地址含 secret，请勿分享。删除 ~/sleepy/visits.jsonl 可清空统计。</footer>
+</div>
+</body>
+</html>

@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 # coding: utf-8
+import hmac
 import json
 import os
 import threading
 import time
+from collections import Counter
+from datetime import datetime, timedelta
 
 import utils as u
 from data import data as data_init
@@ -232,6 +235,87 @@ def visit():
 
     u.info(f"visit: {visitor_id[:8]}... {record['screen']} {record['platform']} {record['country']}")
     return jsonify({'success': True})
+
+
+def _load_visits():
+    """读取 visits.jsonl（含滚动文件），忽略损坏行。"""
+    records = []
+    for path in (VISIT_FILE, VISIT_FILE + '.1'):
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(rec, dict):
+                        records.append(rec)
+        except OSError:
+            continue
+    records.sort(key=lambda r: str(r.get('ts', '')))
+    return records
+
+
+@app.route('/visits')
+def visits_page():
+    """访客统计页，需要 data.json 里的 secret。"""
+    given = request.args.get('secret', '')
+    real = d.dget('secret') or ''
+    if not given or not hmac.compare_digest(str(given), str(real)):
+        return make_response('403 Forbidden: bad secret', 403)
+
+    records = _load_visits()
+    total = len(records)
+    unique = len({r.get('visitorId') for r in records if r.get('visitorId')})
+
+    def top(field, n=10):
+        counter = Counter((r.get(field) or '未知') for r in records)
+        return counter.most_common(n)
+
+    today = datetime.now().date()
+    days = [(today - timedelta(days=i)).isoformat() for i in range(13, -1, -1)]
+    day_counter = Counter(str(r.get('ts', ''))[:10] for r in records)
+    daily = [{'day': day, 'count': day_counter.get(day, 0)} for day in days]
+    max_daily = max([x['count'] for x in daily] + [1])
+
+    recent = []
+    for r in reversed(records[-50:]):
+        recent.append({
+            'ts': str(r.get('ts', ''))[:19].replace('T', ' '),
+            'visitor': (r.get('visitorId') or '')[:8],
+            'screen': r.get('screen') or '未知',
+            'platform': r.get('platform') or '未知',
+            'model': r.get('model') or '-',
+            'country': r.get('country') or '-',
+            'timezone': r.get('timezone') or '-',
+            'ua': (r.get('ua') or '')[:60],
+        })
+
+    summary = {
+        'total': total,
+        'unique': unique,
+        'screens': top('screen'),
+        'platforms': top('platform'),
+        'countries': top('country'),
+        'models': top('model'),
+        'timezones': top('timezone'),
+        'daily': daily,
+        'max_daily': max_daily,
+        'recent': recent,
+    }
+
+    if request.args.get('format') == 'json':
+        return jsonify(summary)
+
+    resp = make_response(render_template('visits.html', **summary))
+    resp.headers['Cache-Control'] = 'no-store'
+    resp.headers['X-Robots-Tag'] = 'noindex'
+    return resp
 
 
 @app.route('/get/status_list')
