@@ -261,9 +261,10 @@ def _device_model(record):
 
 
 _SCREEN_RE = re.compile(r'^\s*(\d{2,5})\s*x\s*(\d{2,5})\s*(?:@\s*[\d.]+)?\s*$')
+SCREEN_ICON_SCALE = 0.1  # 1 个 CSS 像素画成 0.1px；改成 1.0 就是严格 1:1
 
 
-def _screen_thumb(name):
+def _screen_thumb(name, scale=SCREEN_ICON_SCALE):
     """把 "1440x900@2" 解析成示意图所需的尺寸/类型，解析失败返回 None。"""
     match = _SCREEN_RE.match(name or '')
     if not match:
@@ -280,11 +281,10 @@ def _screen_thumb(name):
         kind = 'phone'
     else:
         kind = 'desktop'
-    scale = min(54.0 / w, 38.0 / h)
     return {
         'w': w, 'h': h, 'kind': kind,
-        'dw': max(14, int(round(w * scale))),
-        'dh': max(14, int(round(h * scale))),
+        'dw': max(8, int(round(w * scale))),
+        'dh': max(8, int(round(h * scale))),
     }
 
 
@@ -357,7 +357,7 @@ def visits_page():
             'ua': (r.get('ua') or '')[:110],
             'ua_full': r.get('ua') or '',
             'build': _device_build(r),
-            'thumb': _screen_thumb(r.get('screen') or ''),
+            'thumb': _screen_thumb(r.get('screen') or '', scale=0.04),
         })
 
     screens = []

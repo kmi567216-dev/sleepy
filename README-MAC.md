@@ -204,7 +204,7 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 - 原始记录：`tail -f ~/sleepy/visits.jsonl`
 - 统计页：`https://sleep.example.com/visits?secret=<你的secret>`，也可以加 `&format=json` 直接拿 JSON
 - 统计页包含：总访问、独立访客、最近 14 天、屏幕/平台/国家/型号/时区分布、最近 50 条记录
-- 屏幕分辨率一栏会按宽高比画出手机 / 平板 / 桌面的示意小图（仅根据 CSS 宽高判断）
+- 屏幕分辨率一栏会按统一比例（默认 1:10）画出手机 / 平板 / 桌面的示意小图，保持各屏幕之间的真实大小关系；`server.py` 的 `SCREEN_ICON_SCALE` 可调，改成 `1.0` 就是严格 1:1（大屏会撑出横向滚动）
 
 `/visits` 没有公开入口，靠 `data.json` 的 `secret` 保护；secret 放在 URL 里，Cloudflare 边缘会看到，介意的话可以改成 POST 或请求头。
 
