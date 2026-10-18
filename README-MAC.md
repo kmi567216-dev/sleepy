@@ -181,7 +181,7 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 3. “使用中 / 未使用”不区分锁屏，直接复制现有的「前台应用状态」宏两次，改触发器和 URL：
    - **未使用宏**：触发器「设备锁定 / Device Locked」→ `...&status=1`
    - **使用宏**：触发器「设备解锁 / Device Unlocked」→ `...&status=0&app_name={fg_app_name}`
-   - **心跳宏**：触发器「Regular Interval / 定时」，每 5 分钟 → `.../ping?secret=<你的secret>&device=phone`
+   - **心跳宏**：触发器「Regular Interval / 定时」，每 5 分钟 → `.../ping?secret=<你的secret>&device=phone`；**加约束「屏幕开启 / Screen On」或「设备解锁 / Device Unlocked」**，锁屏后停止心跳，避免把锁屏误算成“使用中”
 
    超过 `heartbeat.phone_timeout`（默认 900 秒）没有 `/set` 或 `/ping`，页面就显示「似了」，也就是“未使用”；锁屏、休眠、断网不区分。如果不装心跳宏，手机 15 分钟没切 App 就会被误判为未使用。
    > 如果之前按旧文档建过 `status=2` 的锁屏宏，删掉或改成 `status=1`。
