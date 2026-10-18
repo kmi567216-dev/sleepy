@@ -30,7 +30,7 @@ LAST_PING=-30
 while true; do
     # 每 30 秒发一次心跳；App 没变也能让服务端知道这台 Mac 还在用
     if [ $((SECONDS - LAST_PING)) -ge 30 ]; then
-        /usr/bin/curl -sG --max-time 5 "$SERVER/ping" \
+        /usr/bin/curl -sG --max-time 10 "$SERVER/ping" \
             --data-urlencode "secret=$SECRET" \
             --data-urlencode "device=pc" >/dev/null 2>&1
         LAST_PING=$SECONDS
@@ -38,7 +38,7 @@ while true; do
 
     APP=$("$FRONTAPP" 2>/dev/null)
     if [ -n "$APP" ] && [ "$APP" != "$LAST" ]; then
-        /usr/bin/curl -sG --max-time 5 "$SERVER/set" \
+        /usr/bin/curl -sG --max-time 10 "$SERVER/set" \
             --data-urlencode "secret=$SECRET" \
             --data-urlencode "pc_status=0" \
             --data-urlencode "pc_app_name=$APP" >/dev/null 2>&1

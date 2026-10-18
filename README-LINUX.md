@@ -1,5 +1,7 @@
 # sleepy on Linux
 
+> OpenWrt / 斐讯 N1 的部署见 [README-OPENWRT.md](./README-OPENWRT.md)（procd、无 pip、OpenClash 的坑）。
+
 把 sleepy 从 macOS 迁到 Linux 服务器（VPS / 家宽小主机）时，大部分东西不用改：Flask 代码、`data.json`、secret、手机 MacroDroid、Cloudflare Tunnel、页面和接口都一样。需要替换的只有进程管理和 Mac 前台检测。
 
 ## 和 macOS 的差异
