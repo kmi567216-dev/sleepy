@@ -35,5 +35,5 @@ while true; do
             --data-urlencode "pc_app_name=$APP" >/dev/null 2>&1
         LAST="$APP"
     fi
-    sleep 2
+    sleep 0.5
 done

@@ -128,7 +128,6 @@ def style_css():
 @app.route('/query')
 def query():
     d.load()
-    showip(request, '/query')
     st = d.data.get('status', 0)
     try:
         stinfo = d.data['status_list'][st].copy()

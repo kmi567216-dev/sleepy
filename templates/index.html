@@ -82,7 +82,11 @@
             }
         }
 
-        setInterval(refreshStatus, 3000);
+        async function refreshLoop() {
+            await refreshStatus();
+            setTimeout(refreshLoop, 500);
+        }
+        refreshLoop();
     </script>
     <script src="/static/fp.min.js"></script>
     <script>

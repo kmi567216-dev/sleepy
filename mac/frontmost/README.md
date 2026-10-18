@@ -3,7 +3,7 @@
 这个子目录只负责一件事：检测 Mac 当前的前台应用，并上报到 sleepy 的 `/set`。
 
 - `frontapp.swift`：启动一次，读取 `NSWorkspace.shared.frontmostApplication`，打印应用名后退出。
-- `pc_status_mac.sh`：每 2 秒运行一次 `frontapp`；应用名变化时调用
+- `pc_status_mac.sh`：每 0.5 秒运行一次 `frontapp`；应用名变化时调用
   `http://127.0.0.1:9010/set?secret=...&pc_status=0&pc_app_name=<App>`。
   secret 从仓库根目录的 `data.json` 读取，上报地址可用环境变量 `SLEEPY_SERVER` 覆盖。
 

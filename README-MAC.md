@@ -13,7 +13,7 @@
 ## 原理
 
 ```
-Mac: mac/frontmost/pc_status_mac.sh ──每2秒──> frontapp ──> /set?pc_status=0&pc_app_name=<App>
+Mac: mac/frontmost/pc_status_mac.sh ──每0.5秒──> frontapp ──> /set?pc_status=0&pc_app_name=<App>
 手机: MacroDroid ───────────────────────────────> /set?status=N&app_name=<App>
                                                       │
                                              Flask 写入 data.json
@@ -23,7 +23,7 @@ Mac: mac/frontmost/pc_status_mac.sh ──每2秒──> frontapp ──> /set?p
 
 服务端本身不做任何“检测”，只负责接收上报和展示。
 
-首页每 3 秒轮询一次 `/query`（响应里同时包含 `info` 和 `pc_info`），状态和前台应用会自动更新，不需要手动刷新；请求失败时保留旧值，下一轮再试。
+首页每 0.5 秒轮询一次 `/query`（响应里同时包含 `info` 和 `pc_info`），状态和前台应用会自动更新，不需要手动刷新；请求失败时保留旧值，下一轮再试。
 
 ## 1. 准备环境
 
@@ -77,7 +77,7 @@ bash mac/install_mac.sh
 2. 用 `swiftc` 编译 `mac/frontmost/frontapp`；
 3. 写入并加载两个 LaunchAgent：
    - `com.sleepy.server`：waitress 监听 `127.0.0.1:9010`
-   - `com.sleepy.pcstatus`：每 2 秒上报前台应用
+   - `com.sleepy.pcstatus`：每 0.5 秒上报前台应用
 4. 日志输出到 `~/Library/Logs/sleepy-server.log` 和 `~/Library/Logs/sleepy-pcstatus.log`。
 
 验证：
@@ -93,7 +93,7 @@ launchctl print gui/$(id -u)/com.sleepy.pcstatus | grep -E "state|pid"
 ## 4. Mac 前台检测是怎么做的
 
 - `mac/frontmost/frontapp.swift`：启动一次，读取 `NSWorkspace.shared.frontmostApplication` 并打印应用名后退出。
-- `mac/frontmost/pc_status_mac.sh`：每 2 秒运行一次 `frontapp`；应用名变化时调用：
+- `mac/frontmost/pc_status_mac.sh`：每 0.5 秒运行一次 `frontapp`；应用名变化时调用：
 
 ```bash
 curl -sG http://127.0.0.1:9010/set \
