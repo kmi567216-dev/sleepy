@@ -1,8 +1,13 @@
 #!/usr/bin/python3
 # coding: utf-8
+import json
+import os
+import threading
+import time
+
 import utils as u
 from data import data as data_init
-from flask import Flask, render_template, request, url_for, redirect, flash, make_response
+from flask import Flask, render_template, request, url_for, redirect, flash, make_response, jsonify
 from markupsafe import escape
 
 
@@ -100,7 +105,8 @@ def index():
         pc_status_desc=pc_stat['desc'],
         status_color=stat['color'],
         pc_status_color=pc_stat['color'],
-        more_text=ot['more_text']
+        more_text=ot['more_text'],
+        privacy_note=ot.get('privacy_note', '')
     )
 
 
@@ -141,6 +147,91 @@ def query():
         'pc_info': pc_info
     }
     return u.format_dict(ret)
+
+
+VISIT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'visits.jsonl')
+_visit_lock = threading.Lock()
+_visit_hits = {}
+VISIT_LIMIT = 30
+VISIT_WINDOW = 60
+
+
+def _client_ip():
+    return request.headers.get('CF-Connecting-IP') or request.remote_addr or ''
+
+
+def _visit_rate_ok(ip):
+    now = time.time()
+    with _visit_lock:
+        arr = [t for t in _visit_hits.get(ip, []) if now - t < VISIT_WINDOW]
+        if len(arr) >= VISIT_LIMIT:
+            _visit_hits[ip] = arr
+            return False
+        arr.append(now)
+        _visit_hits[ip] = arr
+        if len(_visit_hits) > 2000:
+            for k in [k for k, v in _visit_hits.items() if not v or now - v[-1] > VISIT_WINDOW]:
+                _visit_hits.pop(k, None)
+        return True
+
+
+@app.route('/visit', methods=['POST'])
+def visit():
+    """接收 FingerprintJS 的访客指纹（仅存脱敏后的摘要，不存 IP）。"""
+    if request.content_length and request.content_length > 4096:
+        return jsonify({'success': False, 'code': 'too large'}), 413
+    if not _visit_rate_ok(_client_ip()):
+        return jsonify({'success': False, 'code': 'rate limited'}), 429
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({'success': False, 'code': 'bad request'}), 400
+
+    def text(key, limit=256):
+        value = payload.get(key)
+        return value[:limit] if isinstance(value, str) else ''
+
+    visitor_id = text('visitorId', 64)
+    if not visitor_id:
+        return jsonify({'success': False, 'code': 'missing visitorId'}), 400
+
+    confidence = payload.get('confidence')
+    if not isinstance(confidence, (int, float)):
+        confidence = None
+    cores = payload.get('hardwareConcurrency')
+    if not isinstance(cores, int):
+        cores = None
+
+    record = {
+        'ts': time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+        'country': request.headers.get('CF-IPCountry', ''),
+        'visitorId': visitor_id,
+        'confidence': confidence,
+        'screen': text('screen', 32),
+        'window': text('window', 32),
+        'platform': text('platform', 64),
+        'model': text('model', 64),
+        'languages': text('languages', 128),
+        'timezone': text('timezone', 64),
+        'ua': text('ua', 256),
+        'hardwareConcurrency': cores,
+    }
+
+    with _visit_lock:
+        try:
+            if os.path.exists(VISIT_FILE) and os.path.getsize(VISIT_FILE) > 5 * 1024 * 1024:
+                os.replace(VISIT_FILE, VISIT_FILE + '.1')
+            with open(VISIT_FILE, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(record, ensure_ascii=False) + '\n')
+            try:
+                os.chmod(VISIT_FILE, 0o600)
+            except OSError:
+                pass
+        except Exception as e:
+            u.error(f'write visit failed: {e}')
+            return jsonify({'success': False, 'code': 'server error'}), 500
+
+    u.info(f"visit: {visitor_id[:8]}... {record['screen']} {record['platform']} {record['country']}")
+    return jsonify({'success': True})
 
 
 @app.route('/get/status_list')

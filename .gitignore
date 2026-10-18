@@ -7,3 +7,5 @@ venv/
 mac/frontmost/frontapp
 前台应用状态-本机.macro
 *.log
+visits.jsonl
+visits.jsonl.1

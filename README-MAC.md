@@ -187,7 +187,29 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
    - Screen Off → `/set?secret=...&status=1`
    - Screen On → `/set?secret=...&status=0&app_name={fg_app_name}`
 
-## 7. 安全清单
+## 7. 访客指纹（可选，FingerprintJS）
+
+页面通过自托管的 `static/fp.min.js`（FingerprintJS v5，MIT）计算浏览器指纹，并 POST 到 `/visit`。服务端只把摘要写进 `visits.jsonl`：
+
+- `visitorId`、`confidence`
+- 屏幕：`1440x900@2`（CSS 像素 + `devicePixelRatio`）
+- 窗口大小、`platform`、`languages`、`timezone`、`User-Agent`、CPU 核心数
+- Android 的 UA-CH `model`（iPhone / iPad / macOS 仍然拿不到精确型号）
+- 国家（`CF-IPCountry`），**不存 IP**
+
+`/visit` 每 IP 每分钟最多 30 次，请求体上限 4KB；`visits.jsonl` 超过 5MB 自动滚动为 `visits.jsonl.1`，文件权限 600。
+
+查看：
+
+```bash
+tail -f ~/sleepy/visits.jsonl
+```
+
+关闭：删掉 `templates/index.html` 底部的 `<script src="/static/fp.min.js"></script>` 和紧随其后的指纹上报脚本（以及 `privacy_note`），然后删除 `visits.jsonl`。
+
+> 注意：浏览器指纹在 PIPL/GDPR 下通常属于个人信息。公开站点建议保留页面底部的隐私提示，并按需清理日志；不要把 `visitorId` 和 IP 拼在一起长期保存。FingerprintJS 只能识别“同一浏览器再次访问”，不等于真实身份，iPhone / Mac 的精确型号依旧拿不到。
+
+## 8. 安全清单
 
 - `secret` 用随机长串，不要用示例值 `MySecret`；
 - 走 Tunnel 时 `host` 保持 `127.0.0.1`，不要在路由器上给 9010 做端口映射；
@@ -196,7 +218,7 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 - 不要把 `data.json`、带真实 secret 的 `.macro` 提交到仓库；
 - 本分支已把 `/set` 日志里的 secret 脱敏。
 
-## 8. 常见问题
+## 9. 常见问题
 
 **页面一直显示“系统桌面”**
 ：Mac 上报进程没跑起来，或者用了会缓存的长驻 `NSWorkspace` 循环。检查 `launchctl print gui/$(id -u)/com.sleepy.pcstatus`，并确认 `mac/frontmost/frontapp` 输出的确实是当前 App。
@@ -210,7 +232,7 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 **`/set` 返回 403 / 挑战页**
 ：Cloudflare Bot Fight Mode 在拦截，关掉即可。
 
-## 9. 文件说明
+## 10. 文件说明
 
 | 路径 | 说明 |
 | --- | --- |
@@ -220,3 +242,5 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 | `mac/frontmost/README.md` | 前台检测子目录说明 |
 | `server.py` | Flask 路由；已修复 `pc_desc` / `pc_color` |
 | `example.jsonc` | 配置模板（含 `pc_status` / `pc_app_name`） |
+| `static/fp.min.js` | FingerprintJS v5（MIT），访客指纹 |
+| `visits.jsonl` | 运行时生成的访客记录，已在 `.gitignore` |

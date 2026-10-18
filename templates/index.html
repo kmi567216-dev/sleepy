@@ -29,6 +29,7 @@
 
         <div style="height: 10px;"></div>
         {{ more_text | safe }}
+        {% if privacy_note %}<div style="font-size: 0.62em; opacity: 0.55; margin-top: 10px;">{{ privacy_note }}</div>{% endif %}
         <!-- <a>ps: 如果长时间无响应，可能是你的网络问题，或服务器无法响应等</a> -->
         <div style="height: 40px;"></div>
         <a>你可以通过这个页面视奸 {{ user }} 。
@@ -82,6 +83,46 @@
         }
 
         setInterval(refreshStatus, 3000);
+    </script>
+    <script src="/static/fp.min.js"></script>
+    <script>
+        (function () {
+            try { if (sessionStorage.getItem('sleepy_fp_sent')) return; } catch (e) {}
+            if (typeof FingerprintJS === 'undefined') return;
+            FingerprintJS.load({monitoring: false}).then(function (fp) {
+                return fp.get();
+            }).then(function (result) {
+                var payload = {
+                    visitorId: result.visitorId,
+                    confidence: result.confidence ? result.confidence.score : null,
+                    screen: screen.width + 'x' + screen.height + '@' + (window.devicePixelRatio || 1),
+                    window: innerWidth + 'x' + innerHeight,
+                    platform: navigator.platform || '',
+                    languages: (navigator.languages || [navigator.language || '']).join(','),
+                    timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+                    ua: navigator.userAgent,
+                    model: '',
+                    hardwareConcurrency: navigator.hardwareConcurrency || null
+                };
+                function send() {
+                    fetch('/visit', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload),
+                        keepalive: true
+                    }).catch(function () {});
+                    try { sessionStorage.setItem('sleepy_fp_sent', '1'); } catch (e) {}
+                }
+                if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+                    navigator.userAgentData.getHighEntropyValues(['model']).then(function (v) {
+                        payload.model = v.model || '';
+                        send();
+                    }).catch(send);
+                } else {
+                    send();
+                }
+            }).catch(function () {});
+        })();
     </script>
 </body>
 
