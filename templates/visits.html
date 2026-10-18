@@ -34,6 +34,17 @@
         .muted { color: #6f7a88; }
         .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
         .ua { color: #7d8794; }
+        .dev { display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-end; vertical-align: middle; }
+        .dev .scr { width: var(--w); height: var(--h); border: 1.5px solid #8a95a3; border-radius: 4px; background: linear-gradient(145deg, #2b3846, #41546b); position: relative; box-shadow: 0 0 0 1px #0b0e12 inset; }
+        .dev.phone .scr { border-width: 2px; border-radius: 6px; }
+        .dev.phone .scr::before { content: ""; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 30%; height: 2px; background: #8a95a3; border-radius: 2px; }
+        .dev.tablet .scr { border-width: 2px; border-radius: 5px; }
+        .dev.desktop .scr { border-radius: 2px; }
+        .dev.desktop .stand { width: 2px; height: 4px; background: #8a95a3; }
+        .dev.desktop .base { width: 60%; height: 2px; background: #8a95a3; border-radius: 2px; margin-top: 1px; }
+        .screen-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+        .screen-cell { display: inline-flex; align-items: center; gap: 6px; }
+
         footer { margin-top: 34px; color: #5f6a78; font-size: 11.5px; }
     </style>
 </head>
@@ -73,8 +84,31 @@
     </div>
     {% endmacro %}
 
+    {% macro screen_icon(s) %}
+    {% if s %}
+    <span class="dev {{ s.kind }}" style="--w: {{ s.dw }}px; --h: {{ s.dh }}px" title="{{ s.w }}×{{ s.h }}">
+        <span class="scr"></span>
+        {% if s.kind == 'desktop' %}<span class="stand"></span><span class="base"></span>{% endif %}
+    </span>
+    {% endif %}
+    {% endmacro %}
+
+    <h2>屏幕分辨率</h2>
+    <div class="card">
+        <table>
+            {% for s in screens %}
+            <tr>
+                <td style="width: 64px">{{ screen_icon(s) }}</td>
+                <td class="screen-name">{{ s.name }}</td>
+                <td class="muted" style="text-align:right">{{ s.count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="muted">暂无数据</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
     <div class="cols">
-        {{ top_table('屏幕分辨率', screens) }}
         {{ top_table('平台 / 系统', platforms) }}
         {{ top_table('国家 / 地区', countries) }}
         {{ top_table('设备型号', models) }}
@@ -89,7 +123,7 @@
             <tr>
                 <td class="mono">{{ r.ts }}</td>
                 <td class="mono">{{ r.visitor }}</td>
-                <td>{{ r.screen }}</td>
+                <td><span class="screen-cell">{{ screen_icon(r.thumb) }}<span class="screen-name">{{ r.screen }}</span></span></td>
                 <td>{{ r.platform }}</td>
                 <td>{{ r.model }}</td>
                 <td>{{ r.country }}</td>

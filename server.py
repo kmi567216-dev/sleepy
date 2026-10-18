@@ -258,6 +258,34 @@ def _device_model(record):
     return ''
 
 
+_SCREEN_RE = re.compile(r'^\s*(\d{2,5})\s*x\s*(\d{2,5})\s*(?:@\s*[\d.]+)?\s*$')
+
+
+def _screen_thumb(name):
+    """把 "1440x900@2" 解析成示意图所需的尺寸/类型，解析失败返回 None。"""
+    match = _SCREEN_RE.match(name or '')
+    if not match:
+        return None
+    w, h = int(match.group(1)), int(match.group(2))
+    if w <= 0 or h <= 0:
+        return None
+    ratio = w / h
+    if ratio < 0.78:
+        kind = 'phone'
+    elif ratio < 1.15:
+        kind = 'tablet'
+    elif min(w, h) <= 500 and ratio >= 1.5:
+        kind = 'phone'
+    else:
+        kind = 'desktop'
+    scale = min(54.0 / w, 38.0 / h)
+    return {
+        'w': w, 'h': h, 'kind': kind,
+        'dw': max(14, int(round(w * scale))),
+        'dh': max(14, int(round(h * scale))),
+    }
+
+
 def _load_visits():
     """读取 visits.jsonl（含滚动文件），忽略损坏行。"""
     records = []
@@ -315,12 +343,21 @@ def visits_page():
             'country': r.get('country') or '-',
             'timezone': r.get('timezone') or '-',
             'ua': (r.get('ua') or '')[:60],
+            'thumb': _screen_thumb(r.get('screen') or ''),
         })
+
+    screens = []
+    for name, count in top('screen'):
+        item = {'name': name, 'count': count}
+        thumb = _screen_thumb(name)
+        if thumb:
+            item.update(thumb)
+        screens.append(item)
 
     summary = {
         'total': total,
         'unique': unique,
-        'screens': top('screen'),
+        'screens': screens,
         'platforms': top('platform'),
         'countries': top('country'),
         'models': Counter((_device_model(r) or '未知') for r in records).most_common(10),
