@@ -18,6 +18,67 @@ from markupsafe import escape
 d = data_init()
 app = Flask(__name__)
 
+# --- 在线/使用状态（心跳） ---
+STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'state.json')
+_state_lock = threading.Lock()
+
+
+def _load_state():
+    try:
+        with open(STATE_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            data.setdefault('phone', time.time())
+            data.setdefault('pc', time.time())
+            return data
+    except Exception:
+        pass
+    return {'phone': time.time(), 'pc': time.time()}
+
+
+_state = _load_state()
+
+
+def _save_state():
+    tmp = STATE_FILE + '.tmp'
+    try:
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(_state, f)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, STATE_FILE)
+    except Exception as e:
+        u.error(f'write state failed: {e}')
+
+
+def _touch(device):
+    with _state_lock:
+        _state[device] = time.time()
+        _save_state()
+
+
+def _timeout(device):
+    cfg = d.data.get('heartbeat') or {}
+    default = 900 if device == 'phone' else 180
+    try:
+        return max(30, int(cfg.get(f'{device}_timeout', default)))
+    except Exception:
+        return default
+
+
+def _is_stale(device):
+    last = float(_state.get(device, 0) or 0)
+    return (time.time() - last) > _timeout(device)
+
+
+def _idle_info():
+    try:
+        info = d.data['status_list'][1].copy()
+    except Exception:
+        info = {'name': '似了', 'desc': '设备当前未被使用。', 'color': 'sleeping'}
+    info['desc'] = '设备当前未被使用（锁屏、休眠或离线）。'
+    return info
+
+
 # ---
 
 
@@ -61,6 +122,8 @@ def _match_app(app, names):
 
 def pc_display():
     """根据 pc_status / pc_app_name 计算电脑端展示信息。"""
+    if _is_stale('pc'):
+        return _idle_info()
     app = (d.data.get('pc_app_name') or '').strip()
     pc_st = d.data.get('pc_status', 0)
     try:
@@ -97,6 +160,8 @@ def index():
             'desc': '未知的标识符，可能是配置问题。',
             'color': 'error'
         }
+    if _is_stale('phone'):
+        stat = _idle_info()
     pc_stat = pc_display()
     return render_template(
         'index.html',
@@ -140,6 +205,9 @@ def query():
             'desc': '',
             'color': ''
         }
+    if _is_stale('phone'):
+        st = 1
+        stinfo = _idle_info()
     # 电脑端状态（含摸鱼判断）
     pc_info = pc_display()
     ret = {
@@ -150,6 +218,20 @@ def query():
         'pc_info': pc_info
     }
     return u.format_dict(ret)
+
+
+@app.route('/ping')
+def ping():
+    """客户端心跳：只更新最后活跃时间，不改状态。"""
+    given = request.args.get('secret', '')
+    real = d.dget('secret') or ''
+    if not given or not hmac.compare_digest(str(given), str(real)):
+        return make_response('403 Forbidden: bad secret', 403)
+    device = request.args.get('device', 'phone')
+    if device not in ('phone', 'pc'):
+        return jsonify({'success': False, 'code': 'bad device'}), 400
+    _touch(device)
+    return jsonify({'success': True, 'device': device, 'ts': int(_state.get(device, time.time()))})
 
 
 VISIT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'visits.jsonl')
@@ -416,6 +498,10 @@ def set_normal():
             d.dset('pc_status', int(pc_status))
         if pc_app_name is not None:
             d.dset('pc_app_name', pc_app_name)
+        if 'status' in request.args or 'app_name' in request.args:
+            _touch('phone')
+        if 'pc_status' in request.args or 'pc_app_name' in request.args:
+            _touch('pc')
         u.info('set success')
         ret = {
             'success': True,

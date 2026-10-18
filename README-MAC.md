@@ -65,6 +65,8 @@ chmod 600 data.json
 
 `data.json` 已在 `.gitignore` 中，**不要提交**（里面有 secret）。
 
+`heartbeat` 控制“多久没消息算未使用”：`phone_timeout` 手机默认 900 秒，`pc_timeout` Mac 默认 180 秒。
+
 ## 3. 安装 launchd 常驻服务
 
 ```bash
@@ -104,14 +106,7 @@ curl -sG http://127.0.0.1:9010/set \
 
 为什么不用一个长驻的 Swift 循环？因为 **没有 RunLoop 的 CLI 进程里 `NSWorkspace.frontmostApplication` 会缓存进程启动时的 App**，之后切换应用不会刷新，表现为「切什么应用都显示同一个名字」。每次启动独立进程查询最稳。
 
-目前只上报「当前前台应用」，**锁屏/睡眠不会自动显示“似了”**。如果需要，可以在脚本里加：
-
-```bash
-# CGSSessionScreenIsLocked
-ioreg -n Root -d1 -a | grep -q "CGSSessionScreenIsLocked" && ...
-```
-
-或者用 `CGSessionCopyCurrentDictionary()` 判断锁屏，锁屏时发 `pc_status=1`，解锁后恢复。
+脚本每 30 秒还会发一次 `/ping?secret=...&device=pc` 心跳；超过 `data.json` 里 `heartbeat.pc_timeout`（默认 180 秒）没收到心跳，页面就把 Mac 显示为「似了」（未使用）。锁屏、睡眠、离线不做区分，统一算“未使用”。
 
 ### 摸鱼判断
 
@@ -183,12 +178,13 @@ cloudflared tunnel run sleepy
 https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_name}
 ```
 
-3. 锁屏显示「锁屏」：不用新宏文件，直接复制现有的「前台应用状态」宏两次，改触发器和 URL：
-   - **锁屏宏**：触发器改成「设备锁定 / Device Locked」，URL 改成 `...&status=2`（去掉 `app_name`）
-   - **解锁宏**：触发器改成「设备解锁 / Device Unlocked」，URL 保持 `...&status=0&app_name={fg_app_name}`
+3. “使用中 / 未使用”不区分锁屏，直接复制现有的「前台应用状态」宏两次，改触发器和 URL：
+   - **未使用宏**：触发器「设备锁定 / Device Locked」→ `...&status=1`
+   - **使用宏**：触发器「设备解锁 / Device Unlocked」→ `...&status=0&app_name={fg_app_name}`
+   - **心跳宏**：触发器「Regular Interval / 定时」，每 5 分钟 → `.../ping?secret=<你的secret>&device=phone`
 
-   `data.json` 的 `status_list` 里已经有 `id=2` 的「锁屏」，描述是「手机已锁屏，暂时不在。」。如果之前建过 Screen Off → `status=1` 的宏，记得改成 `status=2` 或删掉，否则会显示「似了」。
-   > 用「设备锁定/解锁」比「屏幕关闭/开启」准：看视频时屏幕可能自动熄灭，但不一定算锁屏。
+   超过 `heartbeat.phone_timeout`（默认 900 秒）没有 `/set` 或 `/ping`，页面就显示「似了」，也就是“未使用”；锁屏、休眠、断网不区分。如果不装心跳宏，手机 15 分钟没切 App 就会被误判为未使用。
+   > 如果之前按旧文档建过 `status=2` 的锁屏宏，删掉或改成 `status=1`。
 
 ## 7. 访客指纹（可选，FingerprintJS）
 
@@ -251,3 +247,4 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 | `static/fp.min.js` | FingerprintJS v5（MIT），访客指纹 |
 | `templates/visits.html` | `/visits` 统计页模板 |
 | `visits.jsonl` | 运行时生成的访客记录，已在 `.gitignore` |
+| `state.json` | 手机/Mac 的最后心跳时间，运行时生成，已在 `.gitignore` |

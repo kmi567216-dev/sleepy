@@ -9,3 +9,5 @@ mac/frontmost/frontapp
 *.log
 visits.jsonl
 visits.jsonl.1
+state.json
+state.json.tmp
