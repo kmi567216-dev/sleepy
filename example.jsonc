@@ -26,6 +26,12 @@ version now: 2
             "name": "似了",
             "desc": "睡似了或其他原因不在线，紧急情况请使用电话联系。",
             "color": "sleeping"
+        },
+        { // status: 2
+            "id": 2,
+            "name": "锁屏",
+            "desc": "手机已锁屏，暂时不在。",
+            "color": "sleeping"
         }
         // 还可添加更多，以此类推
     ],

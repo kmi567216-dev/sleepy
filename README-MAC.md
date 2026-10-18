@@ -183,9 +183,12 @@ cloudflared tunnel run sleepy
 https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_name}
 ```
 
-3. 建议再加两个宏：
-   - Screen Off → `/set?secret=...&status=1`
-   - Screen On → `/set?secret=...&status=0&app_name={fg_app_name}`
+3. 锁屏显示「锁屏」：不用新宏文件，直接复制现有的「前台应用状态」宏两次，改触发器和 URL：
+   - **锁屏宏**：触发器改成「设备锁定 / Device Locked」，URL 改成 `...&status=2`（去掉 `app_name`）
+   - **解锁宏**：触发器改成「设备解锁 / Device Unlocked」，URL 保持 `...&status=0&app_name={fg_app_name}`
+
+   `data.json` 的 `status_list` 里已经有 `id=2` 的「锁屏」，描述是「手机已锁屏，暂时不在。」。如果之前建过 Screen Off → `status=1` 的宏，记得改成 `status=2` 或删掉，否则会显示「似了」。
+   > 用「设备锁定/解锁」比「屏幕关闭/开启」准：看视频时屏幕可能自动熄灭，但不一定算锁屏。
 
 ## 7. 访客指纹（可选，FingerprintJS）
 
