@@ -194,7 +194,7 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 - `visitorId`、`confidence`
 - 屏幕：`1440x900@2`（CSS 像素 + `devicePixelRatio`）
 - 窗口大小、`platform`、`languages`、`timezone`、`User-Agent`、CPU 核心数
-- Android 的 UA-CH `model`（iPhone / iPad / macOS 仍然拿不到精确型号）
+- Android 的 UA-CH `model`；没有 UA-CH 时（如微信 XWEB、部分华为浏览器）从 UA 的 `Android X; <model> Build/` 提取，例如 `TAS-AL00`（华为 P50）。iPhone / iPad / macOS 仍然拿不到精确型号，UA 本身也可能被伪装
 - 国家（`CF-IPCountry`），**不存 IP**
 
 `/visit` 每 IP 每分钟最多 30 次，请求体上限 4KB；`visits.jsonl` 超过 5MB 自动滚动为 `visits.jsonl.1`，文件权限 600。

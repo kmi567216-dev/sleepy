@@ -3,6 +3,7 @@
 import hmac
 import json
 import os
+import re
 import threading
 import time
 from collections import Counter
@@ -204,6 +205,7 @@ def visit():
     if not isinstance(cores, int):
         cores = None
 
+    ua = text('ua', 256)
     record = {
         'ts': time.strftime('%Y-%m-%dT%H:%M:%S%z'),
         'country': request.headers.get('CF-IPCountry', ''),
@@ -212,10 +214,10 @@ def visit():
         'screen': text('screen', 32),
         'window': text('window', 32),
         'platform': text('platform', 64),
-        'model': text('model', 64),
+        'model': _device_model({'model': text('model', 64), 'ua': ua}),
         'languages': text('languages', 128),
         'timezone': text('timezone', 64),
-        'ua': text('ua', 256),
+        'ua': ua,
         'hardwareConcurrency': cores,
     }
 
@@ -235,6 +237,25 @@ def visit():
 
     u.info(f"visit: {visitor_id[:8]}... {record['screen']} {record['platform']} {record['country']}")
     return jsonify({'success': True})
+
+
+_UA_MODEL_RE = re.compile(r'Android[^;]*;\s*([^;()]+?)\s+Build/', re.I)
+
+
+def _device_model(record):
+    """优先用 UA-CH 的 model；没有就从 UA 的 "Android X; <model> Build/" 里提取。"""
+    model = (record.get('model') or '').strip()
+    if model:
+        return model
+    ua = record.get('ua') or ''
+    match = _UA_MODEL_RE.search(ua)
+    if match:
+        return match.group(1).strip()
+    if 'iPhone' in ua:
+        return 'iPhone'
+    if 'iPad' in ua:
+        return 'iPad'
+    return ''
 
 
 def _load_visits():
@@ -290,7 +311,7 @@ def visits_page():
             'visitor': (r.get('visitorId') or '')[:8],
             'screen': r.get('screen') or '未知',
             'platform': r.get('platform') or '未知',
-            'model': r.get('model') or '-',
+            'model': _device_model(r) or '-',
             'country': r.get('country') or '-',
             'timezone': r.get('timezone') or '-',
             'ua': (r.get('ua') or '')[:60],
@@ -302,7 +323,7 @@ def visits_page():
         'screens': top('screen'),
         'platforms': top('platform'),
         'countries': top('country'),
-        'models': top('model'),
+        'models': Counter((_device_model(r) or '未知') for r in records).most_common(10),
         'timezones': top('timezone'),
         'daily': daily,
         'max_daily': max_daily,
