@@ -13,7 +13,7 @@ version now: 2
     "pc_status": 0, // 电脑端状态 (整数, 对应 status_list 索引)
     "pc_app_name": "系统桌面", // 电脑端当前使用的软件名称
     "heartbeat": { // 心跳超时（秒）：超过这个时间没收到上报/心跳，就显示“似了”（未使用）
-        "phone_timeout": 900, // 手机：15 分钟
+        "phone_timeout": 300, // 手机：5 分钟
         "pc_timeout": 180 // Mac：3 分钟
     },
     "pc_slack_apps": ["Bilibili", "哔哩哔哩", "YouTube", "抖音", "TikTok", "微博", "小红书", "知乎", "Netflix", "爱奇艺", "腾讯视频", "优酷", "Steam", "Epic Games", "Minecraft", "网易云音乐", "Spotify", "QQ音乐", "游戏"], // 判定为“摸鱼”的前台应用（精确匹配，不区分大小写）

@@ -65,7 +65,7 @@ chmod 600 data.json
 
 `data.json` 已在 `.gitignore` 中，**不要提交**（里面有 secret）。
 
-`heartbeat` 控制“多久没消息算未使用”：`phone_timeout` 手机默认 900 秒，`pc_timeout` Mac 默认 180 秒。
+`heartbeat` 控制“多久没消息算未使用”：`phone_timeout` 手机默认 300 秒（5 分钟），`pc_timeout` Mac 默认 180 秒。
 
 ## 3. 安装 launchd 常驻服务
 
@@ -181,9 +181,9 @@ https://sleep.example.com/set?secret=<你的secret>&status=0&app_name={fg_app_na
 3. “使用中 / 未使用”不区分锁屏，直接复制现有的「前台应用状态」宏两次，改触发器和 URL：
    - **未使用宏**：触发器「设备锁定 / Device Locked」→ `...&status=1`
    - **使用宏**：触发器「设备解锁 / Device Unlocked」→ `...&status=0&app_name={fg_app_name}`
-   - **心跳宏**：触发器「Regular Interval / 定时」，每 5 分钟 → `.../ping?secret=<你的secret>&device=phone`；**加约束「屏幕开启 / Screen On」或「设备解锁 / Device Unlocked」**，锁屏后停止心跳，避免把锁屏误算成“使用中”
+   - **心跳宏**：触发器「Regular Interval / 定时」，每 1–2 分钟 → `.../ping?secret=<你的secret>&device=phone`；**加约束「屏幕开启 / Screen On」或「设备解锁 / Device Unlocked」**，锁屏后停止心跳，避免把锁屏误算成“使用中”
 
-   超过 `heartbeat.phone_timeout`（默认 900 秒）没有 `/set` 或 `/ping`，页面就显示「似了」，也就是“未使用”；锁屏、休眠、断网不区分。如果不装心跳宏，手机 15 分钟没切 App 就会被误判为未使用。
+   超过 `heartbeat.phone_timeout`（默认 300 秒）没有 `/set` 或 `/ping`，页面就显示「似了」，也就是“未使用”；锁屏、休眠、断网不区分。如果不装心跳宏，手机 5 分钟没切 App 就会被误判为未使用；心跳间隔要小于超时时间，建议 1–2 分钟一次。
    > 如果之前按旧文档建过 `status=2` 的锁屏宏，删掉或改成 `status=1`。
 
 ## 7. 访客指纹（可选，FingerprintJS）
